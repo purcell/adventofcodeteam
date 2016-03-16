@@ -2,7 +2,7 @@ module Main where
 
 import           One
 import           Three
-
+import           Five
 
 main :: IO ()
 main = do
@@ -13,3 +13,7 @@ main = do
   putStrLn "Three: "
   answer3 <- three
   print answer3
+
+  putStrLn "Five:"
+  answer5 <- five
+  print answer5

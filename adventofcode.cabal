@@ -20,6 +20,9 @@ executable adventofcode
   build-depends:       base
                      , containers >= 0.5
   default-language:    Haskell2010
+  other-modules:
+    One
+    Five
 
 source-repository head
   type:     git
