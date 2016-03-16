@@ -1,5 +1,10 @@
 module Main where
 
+import           One
+
 
 main :: IO ()
-main = undefined
+main = do
+  putStrLn "One:"
+  answer1 <- one
+  print answer1
