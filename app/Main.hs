@@ -5,26 +5,25 @@ import           Two
 import           Three
 import           Four
 import           Five
+import           Six
 import           Eight
 
 main :: IO ()
 main = do
   putStrLn "One:"
-  answer1 <- one
-  print answer1
+  print =<< one
 
   putStrLn "Two: "
-  answer2 <- two
-  print answer2
+  print =<< two
 
   putStrLn "Three: "
-  answer3 <- three
-  print answer3
+  print =<< three
 
   putStrLn "Four:"
-  answer4 <- four
-  print answer4
+  print =<< four
 
   putStrLn "Five:"
-  answer5 <- five
-  print answer5
+  print =<< five
+
+  putStrLn "Six: "
+  print =<< six
