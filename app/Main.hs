@@ -3,6 +3,7 @@ module Main where
 import           One
 import           Two
 import           Three
+import           Four
 import           Five
 
 main :: IO ()
@@ -18,6 +19,10 @@ main = do
   putStrLn "Three: "
   answer3 <- three
   print answer3
+
+  putStrLn "Four:"
+  answer4 <- four
+  print answer4
 
   putStrLn "Five:"
   answer5 <- five
