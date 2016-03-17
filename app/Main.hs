@@ -11,6 +11,7 @@ import           Eight
 -- import           Nine
 import           Ten
 import           Eleven
+import           Twelve
 
 main :: IO ()
 main = do
@@ -25,7 +26,7 @@ main = do
   -- putStrLn "Nine done!"
   putStrLn "Ten done!"
   putStrLn "Eleven done!"
-  -- putStrLn "Twelve done!"
+  putStrLn "Twelve done!"
   -- putStrLn "Thirteen done!"
   -- putStrLn "Fourteen done!"
   -- putStrLn "Fifteen done!"
