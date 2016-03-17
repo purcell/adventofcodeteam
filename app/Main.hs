@@ -1,18 +1,5 @@
 module Main where
 
-import           One
-import           Two
-import           Three
-import           Four
-import           Five
-import           Six
--- import           Seven
-import           Eight
--- import           Nine
-import           Ten
-import           Eleven
-import           Twelve
-
 main :: IO ()
 main = do
   putStrLn "One done!"
