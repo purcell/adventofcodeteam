@@ -27,8 +27,20 @@ executable adventofcode
   default-language:    Haskell2010
   other-modules:
     One
+    Two
+    Three
+    Four
     Five
+    Six
+    Seven
+    Eight
     Nine
+    Ten
+    Eleven
+    Twelve
+    Thirteen
+    Fourteen
+    Seventeen
     Eighteen
 
 source-repository head
