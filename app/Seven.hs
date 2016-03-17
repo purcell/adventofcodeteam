@@ -7,6 +7,7 @@ import           Data.Map           (Map)
 import qualified Data.Map           as M
 import           Data.Sequence      (unfoldl)
 import           Data.Word          (Word16)
+import           Debug.Trace
 import           Text.Parsec
 import           Text.Parsec.String
 
@@ -30,11 +31,8 @@ data Connection = Connection Gate Wire
                   deriving (Show)
 
 
-
-
-
 outputOfWire :: Map Wire Gate -> Wire -> Word16
-outputOfWire conns wire = signal (conns M.! wire)
+outputOfWire conns wire = signal (conns M.! traceShowId wire)
   where
     signal (Literal i) = input i
     signal (And i1 i2) = input i1 .&. input i2
@@ -84,28 +82,7 @@ seven = do
   case result of
     Right connections -> do
       print (length connections)
-      print $ cycles (connectionMap connections) (Wire "a")
       return $ outputOfWire (connectionMap connections) (Wire "a")
     Left err -> error (show err)
 
-
-cycles :: Map Wire Gate -> Wire -> [Wire]
-cycles conns wire = unfoldl g [wire]
-    where
-      g :: [Wire] -> Maybe ([Wire], [Wire])
-      g seen = case intersect newWires seen of
-        [] -> Just (seen ++ newWires, )
-        loops -> error $ "loops: " ++ show loops
-        where newWires = concatMap (wiresInGate conns)
-
-wiresInGate :: Map Wire Gate -> Wire -> [Wire]
-wiresInGate conns wire = wiresInGate' (conns M.! wire)
-    where
-        wiresInGate' (Literal (WireInput w)) = [w]
-        wiresInGate' (And (WireInput w1) (WireInput w2)) = [w1, w2]
-        wiresInGate' (Or (WireInput w1) (WireInput w2)) = [w1, w2]
-        wiresInGate' (LShift (WireInput w) _) = [w]
-        wiresInGate' (RShift (WireInput w) _) = [w]
-        wiresInGate' (Not (WireInput w)) = [w]
-        wiresInGate' _ = []
 
