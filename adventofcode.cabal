@@ -26,6 +26,7 @@ executable adventofcode
   other-modules:
     One
     Five
+    Nine
 
 source-repository head
   type:     git
