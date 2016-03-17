@@ -14,6 +14,7 @@ nice word = threeVowels word && doubleLetter word && not (excludeStrings word)
 threeVowels :: String -> Bool
 threeVowels word = 3 <= length (filter (\char -> elem char vowels) word)
 
+vowels :: String
 vowels = ['a', 'e', 'i', 'o', 'u']
 
 doubleLetter :: String -> Bool

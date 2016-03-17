@@ -29,6 +29,7 @@ executable adventofcode
     One
     Five
     Nine
+    Eighteen
 
 source-repository head
   type:     git
