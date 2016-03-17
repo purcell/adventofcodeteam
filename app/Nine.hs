@@ -11,12 +11,12 @@ data Path = Path { visited       :: [String]
                  , totalDistance :: Int
                  } deriving (Show)
 
-nine :: IO String
+nine :: IO Int
 nine = do
   text <- readFile "input/9.txt"
   return $ findShortestPath text
 
-findShortestPath :: String -> String
+findShortestPath :: String -> Int
 findShortestPath input = totalDistance $ shortestPath $ generatePaths $ parse input
 
 parse :: String -> ([String], [Road])
