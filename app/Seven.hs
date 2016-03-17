@@ -54,14 +54,6 @@ outputOfWire wire = do
     input (WireInput w) = outputOfWire w
     input (LiteralInput v) = return v
 
-
--- while typeof findWire("a") != Literal
-    -- map.each do |item|
-      -- if item.input != Literal
-          --item.input = outputOfWire(lhs) OP outputOfWire(rhs)
-      -- end
-    -- end
-
 parseWire :: Parser Wire
 parseWire = do
   name <- many1 lower
