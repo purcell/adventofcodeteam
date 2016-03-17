@@ -6,7 +6,7 @@ five = do
   return $ niceWords text
 
 niceWords :: String -> Int
-niceWords words = length $ filter nice (lines words)
+niceWords text = length $ filter nice (lines text)
 
 nice :: String -> Bool
 nice word = threeVowels word && doubleLetter word && not (excludeStrings word)
@@ -17,16 +17,16 @@ threeVowels word = 3 <= length (filter (\char -> elem char vowels) word)
 vowels = ['a', 'e', 'i', 'o', 'u']
 
 doubleLetter :: String -> Bool
-doubleLetter (a:b:tail)
+doubleLetter (a:b:rest)
   | a == b    = True
-  | otherwise = doubleLetter (b:tail)
+  | otherwise = doubleLetter (b:rest)
 doubleLetter _ = False
 
 excludeStrings :: String -> Bool
-excludeStrings (a:b:tail)
+excludeStrings (a:b:rest)
   | a == 'a' && b == 'b'    = True
   | a == 'c' && b == 'd'    = True
   | a == 'p' && b == 'q'    = True
   | a == 'x' && b == 'y'    = True
-  | otherwise = excludeStrings (b:tail)
+  | otherwise = excludeStrings (b:rest)
 excludeStrings _ = False
