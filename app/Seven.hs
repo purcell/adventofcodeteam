@@ -1,14 +1,12 @@
 module Seven where
 
-
+import           Control.Monad.State
 import           Data.Bits
-import           Data.List          (intersect)
-import           Data.Map           (Map)
-import qualified Data.Map           as M
-import           Data.Sequence      (unfoldl)
-import           Data.Word          (Word16)
-import           Debug.Trace
-import           Text.Parsec
+import           Data.List
+import           Data.Map            (Map)
+import qualified Data.Map            as M
+import           Data.Word           (Word16)
+import           Text.Parsec         hiding (State)
 import           Text.Parsec.String
 
 
@@ -27,22 +25,42 @@ data Gate = Literal Input
           | Not Input
             deriving (Show)
 
+
 data Connection = Connection Gate Wire
                   deriving (Show)
+instance Eq Connection where
+    (Connection _ a) == (Connection _ b) = a == b
+instance Ord Connection where
+    compare (Connection _ a) (Connection _ b) = compare a b
 
 
-outputOfWire :: Map Wire Gate -> Wire -> Word16
-outputOfWire conns wire = signal (conns M.! traceShowId wire)
+outputOfWire :: Wire -> State (Map Wire Gate) Word16
+outputOfWire wire = do
+    gate <- gets (M.! wire)
+    lit <- signal gate
+
+    modify $ M.insert wire (Literal $ LiteralInput lit)
+
+    return lit
   where
+    signal :: Gate -> State (Map Wire Gate) Word16
     signal (Literal i) = input i
-    signal (And i1 i2) = input i1 .&. input i2
-    signal (Or i1 i2) = input i1 .|. input i2
-    signal (LShift i1 bits) = shiftL (input i1) bits
-    signal (RShift i1 bits) = shiftR (input i1) bits
-    signal (Not i1) = complement (input i1)
-    input :: Input -> Word16
-    input (WireInput w) = outputOfWire conns w
-    input (LiteralInput v) = v
+    signal (And i1 i2) = (.&.) <$> input i1 <*> input i2
+    signal (Or i1 i2) = (.|.) <$> input i1 <*> input i2
+    signal (LShift i1 bits) = flip shiftL bits <$> input i1
+    signal (RShift i1 bits) = flip shiftR bits <$> input i1
+    signal (Not i1) = complement <$> input i1
+    input :: Input -> State (Map Wire Gate) Word16
+    input (WireInput w) = outputOfWire w
+    input (LiteralInput v) = return v
+
+
+-- while typeof findWire("a") != Literal
+    -- map.each do |item|
+      -- if item.input != Literal
+          --item.input = outputOfWire(lhs) OP outputOfWire(rhs)
+      -- end
+    -- end
 
 parseWire :: Parser Wire
 parseWire = do
@@ -81,8 +99,8 @@ seven = do
   result <- parseFile "input/7.txt"
   case result of
     Right connections -> do
-      print (length connections)
-      return $ outputOfWire (connectionMap connections) (Wire "a")
+      print (sort connections)
+      return $ evalState (outputOfWire (Wire "a")) (connectionMap (sort connections))
     Left err -> error (show err)
 
 

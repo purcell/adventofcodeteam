@@ -8,7 +8,7 @@ main = do
   putStrLn "Four done!"
   putStrLn "Five done!"
   putStrLn "Six done!"
-  -- putStrLn "Seven done!"
+  putStrLn "Seven done!"
   putStrLn "Eight done!"
   -- putStrLn "Nine done!"
   putStrLn "Ten done!"
