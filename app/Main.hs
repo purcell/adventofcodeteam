@@ -7,6 +7,7 @@ import           Four
 import           Five
 import           Six
 import           Eight
+import           Ten
 
 main :: IO ()
 main = do
