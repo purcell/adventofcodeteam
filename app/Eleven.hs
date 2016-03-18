@@ -1,8 +1,7 @@
-{-# LANGUAGE OverloadedStrings #-}
 module Eleven where
 
-import Data.String.Utils
-import Data.List
+import           Data.List
+import           Data.String.Utils
 
 eleven :: IO String
 eleven = do
@@ -18,7 +17,7 @@ findNextValidPassword current
 
 nextPassword :: String -> String
 nextPassword current
-  | last current == 'z' = nextPassword (init current) ++ ['a']
+  | last current == 'z' = nextPassword (init current) ++ "a"
   | otherwise = init current ++ [nextLetter (last current)]
 
 nextLetter :: Char -> Char
@@ -38,10 +37,7 @@ hasStraight (a:b:c:rest)
 hasStraight _ = False
 
 isAmbiguous :: String -> Bool
-isAmbiguous password =
-  elem 'i' password
-  || elem 'o' password
-  || elem 'l' password
+isAmbiguous password = any (`elem` password) "iol"
 
 hasTwoPairs :: String -> Bool
 hasTwoPairs password =
