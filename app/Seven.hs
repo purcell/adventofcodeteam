@@ -55,26 +55,24 @@ outputOfWire wire = do
     input (LiteralInput v) = return v
 
 parseWire :: Parser Wire
-parseWire = do
-  name <- many1 lower
-  return (Wire name)
+parseWire = Wire <$> many1 lower <?> "wire"
 
 parseInput :: Parser Input
 parseInput = (try (LiteralInput <$> parseWord16) <|> try (WireInput <$> parseWire)) <?> "input"
 
 parseWord16 :: Parser Word16
-parseWord16 = read <$> many1 digit
+parseWord16 = read <$> many1 digit <?> "number"
 
 parseGate :: Parser Gate
 parseGate = (try parseNot <|> try parseAnd <|> try parseOr <|> try parseLShift <|> try parseRShift <|> try parseLiteral) <?> "gate"
   where
     parseLiteral = Literal <$> parseInput
-    parseAnd = And <$> (parseInput <* string " AND ") <*> parseInput
-    parseOr = Or <$> (parseInput <* string " OR ") <*> parseInput
-    parseLShift = LShift <$> (parseInput <* string " LSHIFT ") <*> parseNumber
-    parseRShift = RShift <$> (parseInput <* string " RSHIFT ") <*> parseNumber
-    parseNot = Not <$> (string "NOT " *> parseInput)
-    parseNumber = read <$> many1 digit
+    parseAnd     = And <$> (parseInput <* string " AND ") <*> parseInput
+    parseOr      = Or <$> (parseInput <* string " OR ") <*> parseInput
+    parseLShift  = LShift <$> (parseInput <* string " LSHIFT ") <*> parseNumber
+    parseRShift  = RShift <$> (parseInput <* string " RSHIFT ") <*> parseNumber
+    parseNot     = Not <$> (string "NOT " *> parseInput)
+    parseNumber  = read <$> many1 digit
 
 
 parseConn :: Parser Connection
@@ -90,8 +88,7 @@ seven :: IO Word16
 seven = do
   result <- parseFile "input/7.txt"
   case result of
-    Right connections -> do
-      -- print (sort connections)
+    Right connections ->
       return $ evalState (outputOfWire (Wire "a")) (connectionMap (sort connections))
     Left err -> error (show err)
 
