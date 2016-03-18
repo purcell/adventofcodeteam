@@ -5,8 +5,8 @@ import           Data.Char
 sumJSON :: String -> Int
 sumJSON [] = 0
 sumJSON (x:xs)
-  | (isDigit x) = plus (read [x]) xs
-  | (x == '-') = minus 0 xs
+  | isDigit x = plus (read [x]) xs
+  | x == '-'  = minus 0 xs
   | otherwise = sumJSON xs
 
 plus :: Int -> String -> Int
@@ -17,10 +17,10 @@ minus = applyOp (-)
 
 
 applyOp :: (Int -> Int -> Int) -> Int -> String -> Int
-applyOp op n [] = 0
+applyOp _  _ [] = 0
 applyOp op n (x:xs)
-  | (isDigit x) = minus ((n * 10) `op` (read [x])) xs
-  | otherwise = n + (sumJSON xs)
+  | isDigit x = minus (n * 10 `op` read [x]) xs
+  | otherwise = n + sumJSON xs
 
 
 twelve :: IO Int
