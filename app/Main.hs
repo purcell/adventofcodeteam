@@ -20,7 +20,7 @@ main = do
   -- putStrLn "Sixteen done!"
   putStrLn "Seventeen done!"
   putStrLn "Eighteen done!"
-  -- putStrLn "Nineteen done!"
+  putStrLn "Nineteen done!"
   -- putStrLn "Twenty done!"
   -- putStrLn "Twenty-One done!"
   -- putStrLn "Twenty-Two done!"
