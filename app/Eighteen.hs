@@ -7,12 +7,12 @@ type Light = (Int, Int)
 
 type Board = Map Light Bool
 
-eighteen :: IO ()
+eighteen :: IO Int
 eighteen = do
     initialBoard <- parseFile <$> readFile "input/18.txt"
     let endBoard = iterate run (Map.fromList initialBoard) !! 100
 
-    print . length $ filter id (Map.elems endBoard)
+    return . length $ filter id (Map.elems endBoard)
 
 parseFile :: String -> [(Light, Bool)]
 parseFile input = concatMap (uncurry parseLine) (zip [0..99] lines')
