@@ -91,7 +91,7 @@ seven = do
   result <- parseFile "input/7.txt"
   case result of
     Right connections -> do
-      print (sort connections)
+      -- print (sort connections)
       return $ evalState (outputOfWire (Wire "a")) (connectionMap (sort connections))
     Left err -> error (show err)
 
