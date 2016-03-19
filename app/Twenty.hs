@@ -1,8 +1,7 @@
 module Twenty where
 
-import Data.Maybe (fromJust)
-import Data.List (find, nub)
-import Debug.Trace (traceShowId)
+import           Data.List  (find)
+import           Data.Maybe (fromJust)
 
 presentsForHouse :: Int -> Int
 presentsForHouse num = sum $ map (* 10) elves
@@ -10,17 +9,24 @@ presentsForHouse num = sum $ map (* 10) elves
     elves = factors num
 
 factors :: Int -> [Int]
-factors n = nub $ upToRoot ++ map (n `div`) upToRoot
+factors n | n <= 2 = [1..n]
+factors n          = upToRoot ++ map (n `div`) upToRoot
   where
-   upToRoot = isFactor $ [1..(floor . sqrt . fromIntegral $ n)]
+   upToRoot = isFactor [1..(floor . sqrt . fromIntegral $ n)]
    isFactor = filter ((== 0) . (n `mod`))
 
 
-housesAndPresents :: [(Int, Int)]
-housesAndPresents = map (\n -> (n, presentsForHouse n)) [1..]
-
-solution :: Int
-solution = fst . fromJust $ find enoughPresents housesAndPresents
+solution :: (Int -> Int) -> Int
+solution f = fst . fromJust $ find enoughPresents $ housesAndPresents
   where enoughPresents (_, presents) = presents >= 29000000
+        housesAndPresents = map (\n -> (n, f n)) [1..]
 
-twenty = solution
+
+presentsForHousePart2 :: Int -> Int
+presentsForHousePart2 num = sum $ map (* 11) elves
+  where
+    elves = filter ((num <=) . (* 50)) $ factors num
+
+
+twenty = ( solution presentsForHouse
+         , solution presentsForHousePart2 )
