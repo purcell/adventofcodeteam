@@ -19,6 +19,17 @@ data Sue = Sue { sueNum   :: Int
 isThisSueForYou :: [Attribute] -> Sue -> Bool
 isThisSueForYou wanted (Sue _ attrs) = all (`elem` wanted) attrs
 
+isThisSueForYouPart2 :: [Attribute] -> Sue -> Bool
+isThisSueForYouPart2 wanted (Sue _ attrs) = all matchingAttr attrs
+  where
+    matchingAttr a@(Attr "cats"  _)       = attrWhere (>) a
+    matchingAttr a@(Attr "trees" _)       = attrWhere (>) a
+    matchingAttr a@(Attr "pomeranians" _) = attrWhere (<) a
+    matchingAttr a@(Attr "goldfish" _)    = attrWhere (<) a
+    matchingAttr a                        = a `elem` wanted
+    attrWhere cmp (Attr name val) = any matches wanted
+      where matches (Attr wantedName wantedVal) = name == wantedName && val `cmp` wantedVal
+
 
 realSueAttrs :: [Attribute]
 realSueAttrs = [ Attr "children" 3
@@ -45,8 +56,9 @@ parseSue = Sue <$> (string "Sue " *> number) <*> (string ": " *> parseAttr `sepB
 parseFile :: String -> IO (Either ParseError [Sue])
 parseFile = parseFromFile (many1 (parseSue <* newline) <* eof)
 
-
-sixteen :: IO Int
+sixteen :: IO (Int, Int)
 sixteen = do
   Right sues <- parseFile "input/16.txt"
-  return . sueNum . fromJust $ find (isThisSueForYou realSueAttrs) sues
+  return ( theSue (isThisSueForYou realSueAttrs) sues
+         , theSue (isThisSueForYouPart2 realSueAttrs) sues )
+    where theSue f = sueNum . fromJust . find f
