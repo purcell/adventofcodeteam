@@ -1,6 +1,6 @@
 module Eighteen where
 
-import Data.Map (Map)
+import           Data.Map (Map)
 import qualified Data.Map as Map
 
 type Light = (Int, Int)
@@ -12,7 +12,7 @@ eighteen = do
     initialBoard <- parseFile <$> readFile "input/18.txt"
     let endBoard = iterate run (Map.fromList initialBoard) !! 100
 
-    putStrLn . show . length $ filter id (Map.elems endBoard)
+    print . length $ filter id (Map.elems endBoard)
 
 parseFile :: String -> [(Light, Bool)]
 parseFile input = concatMap (uncurry parseLine) (zip [0..99] lines')
