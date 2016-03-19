@@ -82,18 +82,12 @@ attack :: Player -> Player -> Player
 attack attacker defender =
   defender { hitPoints = max 0 (hitPoints defender - damage attacker defender) }
 
-gameRounds :: Player -> Player -> [(Player, Player)]
-gameRounds a b = inPlay ++ [head finished]
+winner :: Player -> Player -> Player
+winner a b = mostHitpoints . fromJust . find gameOver $ rounds
   where
-    (inPlay, finished) = break gameOver rounds
     rounds = iterate attackAndSwap (a, b)
     attackAndSwap (a', b') = (attack a' b', a')
     gameOver (a', b') = hitPoints a' == 0 || hitPoints b' == 0
-
-
-winner :: Player -> Player -> Player
-winner a b = mostHitpoints $ last $ gameRounds a b
-  where
     mostHitpoints (a', b') = maximumBy (comparing hitPoints) [a', b']
 
 ------------------------------------------------------------------------------
