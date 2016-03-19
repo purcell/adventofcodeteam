@@ -12,7 +12,7 @@ data Item = Item { itemName   :: String
                  , itemCost   :: Int
                  , itemDamage :: Int
                  , itemArmor  :: Int }
-            deriving (Eq, Show)
+            deriving (Show)
 
 data Inventory = Inventory { weapon :: Item
                            , armor  :: Maybe Item
@@ -73,7 +73,7 @@ data Player = Player { role         :: PlayerRole
                      , hitPoints    :: Int
                      , playerDamage :: Int
                      , playerArmor  :: Int }
-              deriving (Eq, Show)
+              deriving (Show)
 
 damage :: Player -> Player -> Int
 damage attacker defender = max 1 (playerDamage attacker - playerArmor defender)
