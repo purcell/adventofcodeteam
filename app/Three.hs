@@ -1,14 +1,16 @@
 module Three where
 
-import           Data.List (nub)
+import           Data.List       (nub)
+import           Data.List.Split (chunksOf)
 
 
 type Coord = (Int, Int)
 
-countLocationsVisited :: String -> Int
-countLocationsVisited arrows = length . nub $ scanl followArrow origin arrows
-  where
-    origin = (0, 0)
+numDistinctLocations :: [Coord] -> Int
+numDistinctLocations = length . nub
+
+locationsVisited :: String -> [Coord]
+locationsVisited = scanl followArrow (0,0)
 
 followArrow :: Coord -> Char -> Coord
 followArrow (x, y) arrow = newLocation
@@ -20,9 +22,17 @@ followArrow (x, y) arrow = newLocation
           '<' -> (x - 1, y)
           _ -> error "bad arrow"
 
+locationsVisitedPart2 :: String -> [Coord]
+locationsVisitedPart2 arrows = locationsVisited santa ++ locationsVisited robot
+  where
+    successiveArrows = chunksOf 2 arrows
+    santa = map (!! 1) successiveArrows
+    robot = map head successiveArrows
 
 
-three :: IO Int
+
+three :: IO (Int, Int)
 three = do
   text <- readFile "input/3.txt"
-  return $ countLocationsVisited text
+  return ( numDistinctLocations $ locationsVisited text
+         , numDistinctLocations $ locationsVisitedPart2 text )
