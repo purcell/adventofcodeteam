@@ -54,6 +54,9 @@ outputOfWire wire = do
     input (WireInput w) = outputOfWire w
     input (LiteralInput v) = return v
 
+overrideWire :: Map Wire Gate -> Wire -> Word16 -> Map Wire Gate
+overrideWire conns wire val = M.insert wire (Literal (LiteralInput val)) conns
+
 parseWire :: Parser Wire
 parseWire = Wire <$> many1 lower <?> "wire"
 
@@ -84,12 +87,16 @@ parseFile = parseFromFile (many1 (parseConn <* newline) <* eof)
 connectionMap ::[Connection] -> Map Wire Gate
 connectionMap = M.fromList . map (\(Connection gate wire) -> (wire, gate))
 
-seven :: IO Word16
+seven :: IO (Word16, Word16)
 seven = do
   result <- parseFile "input/7.txt"
   case result of
-    Right connections ->
-      return $ evalState (outputOfWire (Wire "a")) (connectionMap (sort connections))
+    Right connections -> return (valueOnA, valueOnAPart2)
+      where
+        circuit = connectionMap $ sort connections
+        runCircuit = evalState (outputOfWire (Wire "a"))
+        valueOnA = runCircuit circuit
+        valueOnAPart2 = runCircuit (overrideWire circuit (Wire "b") valueOnA)
     Left err -> error (show err)
 
 
