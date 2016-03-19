@@ -23,11 +23,16 @@ data Quantity = Quantity { teaspoons  :: Int
 
 data Cookie = Cookie { quantities :: [Quantity] }
 
+totalCalories :: Cookie -> Int
+totalCalories = flip totalOf calories
+
 totalScore :: Cookie -> Int
-totalScore (Cookie qs) = product totals
+totalScore cookie = product totals
   where
-    totals = map totalOf [capacity, durability, flavor, texture]
-    totalOf f = max 0 (sum $ map (\q -> teaspoons q * (f . properties . ingredient) q) qs)
+    totals = map (totalOf cookie) [capacity, durability, flavor, texture]
+
+totalOf :: Cookie -> (Properties -> Int) -> Int
+totalOf (Cookie qs) f = max 0 (sum $ map (\q -> teaspoons q * (f . properties . ingredient) q) qs)
 
 {-
 butterscotch = Ingredient "Butterscotch" Properties { capacity = -1, durability = -2, flavor = 6, texture =  3, calories = 8 }
@@ -67,10 +72,13 @@ number = do
 parseFile :: String -> IO (Either ParseError [Ingredient])
 parseFile = parseFromFile (many1 (parseIngredient <* newline) <* eof)
 
-fifteen :: IO Int
+fifteen :: IO (Int, Int)
 fifteen = do
   result <- parseFile "input/15.txt"
   case result of
     Right ingredients ->
-      return $ totalScore $ bestCookie ingredients
+      let cookies = possibleCookies 100 ingredients
+          bestScore = totalScore . maximumBy (comparing totalScore)
+      in
+        return (bestScore cookies, bestScore (filter ((500 ==) . totalCalories) cookies))
     Left err -> error (show err)
