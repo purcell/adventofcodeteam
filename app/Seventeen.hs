@@ -1,28 +1,23 @@
 module Seventeen where
 
-import Data.List
-import Data.Maybe (fromJust)
-
-fill :: [Int] -> [Int]
-fill buckets = buckets
+import           Data.List
 
 permute :: Int -> [Int] -> [Int] -> [[Int]]
 permute goal tried []
-  | goal == (sum tried) = [tried]
+  | goal == sum tried = [tried]
   | otherwise = []
 permute goal tried remaining
-  | goal == (sum tried) = [tried]
-  | otherwise = concat $ map (permute2 goal tried) (sublists remaining)
+  | goal == sum tried = [tried]
+  | otherwise = concatMap (permute2 goal tried) (sublists remaining)
 
 permute2 :: Int -> [Int] -> [Int] -> [[Int]]
-permute2 goal tried [] = []
+permute2 _    _     [] = []
 permute2 goal tried (x:xs)
-  | x + (sum tried) <= goal = permute goal (tried ++ [x]) xs
+  | x + sum tried <= goal = permute goal (tried ++ [x]) xs
   | otherwise = []
 
 sublists :: [Int] -> [[Int]]
-sublists [] = []
-sublists (x:xs) = [(x:xs)] ++ (sublists xs)
+sublists = filter (not . null) . tails
 
 seventeen :: IO Int
 seventeen = do
