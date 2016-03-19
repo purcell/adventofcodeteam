@@ -12,10 +12,10 @@ nice :: String -> Bool
 nice word = threeVowels word && doubleLetter word && not (excludeStrings word)
 
 threeVowels :: String -> Bool
-threeVowels word = 3 <= length (filter (\char -> elem char vowels) word)
+threeVowels word = 3 <= length (filter (`elem` vowels) word)
 
 vowels :: String
-vowels = ['a', 'e', 'i', 'o', 'u']
+vowels = "aeiou"
 
 doubleLetter :: String -> Bool
 doubleLetter (a:b:rest)
