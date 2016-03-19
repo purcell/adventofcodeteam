@@ -106,16 +106,25 @@ youWithInventory i = Player You 100 (inventoryTotal itemDamage i) (inventoryTota
 boss :: Player
 boss = Player Boss 100 8 2
 
+youWinWith :: Inventory -> Bool
+youWinWith inv = You == role victor
+  where
+    you = youWithInventory inv
+    victor = winner you boss
+
 cheapestWin :: Maybe Inventory
 cheapestWin = find youWinWith cheapestInventories
-  where
-    youWinWith inv = You == role victor
-      where
-        you = youWithInventory inv
-        victor = winner you boss
 
 cheapestInventories :: [Inventory]
 cheapestInventories = sortBy (comparing inventoryCost) possibleInventories
 
-twentyOne :: Int
-twentyOne = inventoryCost $ fromJust cheapestWin
+priciestLoss :: Maybe Inventory
+priciestLoss = find (not . youWinWith) priciestInventories
+
+priciestInventories :: [Inventory]
+priciestInventories = sortBy (flip $ comparing inventoryCost) possibleInventories
+
+twentyOne :: (Int, Int)
+twentyOne = ( inventoryCost $ fromJust cheapestWin
+            , inventoryCost $ fromJust priciestLoss
+            )
