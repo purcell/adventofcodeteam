@@ -1,10 +1,9 @@
 module Six where
 
-import Control.Arrow
-
-import Data.Map (Map)
-import qualified Data.Map as Map
-import Data.String.Utils
+import           Data.Map           (Map)
+import qualified Data.Map           as Map
+import           Text.Parsec        hiding (State)
+import           Text.Parsec.String
 
 data Command = On Light Light | Off Light Light | Toggle Light Light
     deriving Show
@@ -13,28 +12,30 @@ type Light = (Int, Int)
 
 six :: IO Int
 six = do
-    text <- readFile "input/6.txt"
+    parsed <- parseFile "input/6.txt"
+    case parsed of
+      Right commands -> return . countOn $ foldl run Map.empty commands
+      Left err -> error $ show err
 
-    let commands = map parse (lines text)
+parseFile :: String -> IO (Either ParseError [Command])
+parseFile = parseFromFile (many1 (parseCommand <* newline) <* eof)
 
-    return . count $ foldl run Map.empty commands
-
-parse :: String -> Command
-parse line
-    | "turn on" `startswith` line   = let [first, second] = split " through " (drop 8 line) in On (parseLight first) (parseLight second)
-    | "turn off" `startswith` line  = let [first, second] = split " through " (drop 9 line) in Off (parseLight first) (parseLight second)
-    | "toggle" `startswith` line    = let [first, second] = split " through " (drop 7 line) in Toggle (parseLight first) (parseLight second)
-    | otherwise                     = undefined
-    where
-        parseLight coord = let [first, second] = map read (split "," coord) in (first, second)
+parseCommand :: Parser Command
+parseCommand =
+  try (On     <$> (string "turn on "  *> parseLight <* string " through ") <*> parseLight) <|>
+  try (Off    <$> (string "turn off " *> parseLight <* string " through ") <*> parseLight) <|>
+  try (Toggle <$> (string "toggle "   *> parseLight <* string " through ") <*> parseLight) <?> "command"
+  where
+    parseLight = (,) <$> parseNum <* string "," <*> parseNum <?> "light"
+    parseNum = read <$> many1 digit <?> "number"
 
 run :: Map Light Bool -> Command -> Map Light Bool
 run lights (On bottomLeft topRight)     = on lights bottomLeft topRight
 run lights (Off bottomLeft topRight)    = off lights bottomLeft topRight
 run lights (Toggle bottomLeft topRight) = toggle lights bottomLeft topRight
 
-count :: Map Light Bool -> Int
-count lights = length $ filter id (Map.elems lights)
+countOn :: Map Light Bool -> Int
+countOn lights = length $ filter id (Map.elems lights)
 
 on :: Map Light Bool -> Light -> Light -> Map Light Bool
 on lights bottomLeft topRight = foldl (\lights light -> Map.insert light True lights) lights targets
