@@ -12,11 +12,12 @@ import           Data.String.Utils
 hashString :: String -> Int -> String
 hashString value seed = md5s $ Str (value ++ show seed)
 
-bruteForce :: String -> Int
-bruteForce seed = fromJust $ find (startswith "00000" . hashString seed) [0..]
+bruteForce :: String -> String -> Int
+bruteForce prefix seed = fromJust $ find (startswith prefix . hashString seed) [0..]
 
-four :: IO Int
+four :: IO (Int, Int)
 four = do
-  initialValue <- readFile "input/4.txt"
-  return $ bruteForce (strip initialValue)
+  initialValue <- strip <$> readFile "input/4.txt"
+  return ( bruteForce "00000" initialValue
+         , bruteForce "000000" initialValue )
 
