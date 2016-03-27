@@ -10,16 +10,17 @@ newtype Package = Package { weight :: Int }
                   deriving (Show, Eq, Ord)
 
 grouped3 :: [Package] -> Maybe [[Package]]
-grouped3 pkgs = listToMaybe $ groupingsOf3 limit pkgs
+grouped3 pkgs = listToMaybe $ threeGroups limit pkgs
   where limit = totalWeight pkgs `div` 3
 
-groupingsOf3 :: Int -> [Package] -> [[[Package]]]
-groupingsOf3 limit pkgs = do
+threeGroups :: Int -> [Package] -> [[[Package]]]
+threeGroups limit pkgs = do
   group1 <- bestGroups limit pkgs
   group2 <- groupsOfWeight limit (pkgs \\ group1)
   group3 <- groupsOfWeight limit ((pkgs \\ group1) \\ group2)
-  guard (length pkgs == sum (map length [group1, group2, group3]))
-  return [group1, group2, group3]
+  let groups = [group1, group2, group3] in do
+    guard (length pkgs == sum (map length groups))
+    return groups
 
 bestGroups :: Int -> [Package] -> [[Package]]
 bestGroups limit pkgs = concatMap (sortBy (comparing entanglement)) $ groupBy ((==) `on` length) $ groupsOfWeight limit pkgs
