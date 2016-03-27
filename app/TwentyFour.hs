@@ -22,7 +22,7 @@ groupingsOf3 limit pkgs = do
   return [group1, group2, group3]
 
 bestGroups :: Int -> [Package] -> [[Package]]
-bestGroups limit pkgs = concatMap (sortBy (comparing entanglement)) $ groupBy ((==) `on` length) $ groupsOfWeight limit $ heaviestFirst pkgs
+bestGroups limit pkgs = concatMap (sortBy (comparing entanglement)) $ groupBy ((==) `on` length) $ groupsOfWeight limit pkgs
 
 
 -- Unlike Data.List.subsequences, this returns subsequences in increasing length order
@@ -35,9 +35,6 @@ subsequences xs = concat $ unfoldr f [([], xs)]
       where nexts = [ (soFar ++ [nxt], rest) | (soFar, remaining) <- lasts, (nxt, rest) <- splits remaining ]
     splits ys = zip ys (drop 1 $ tails ys)
 
-
-heaviestFirst :: [Package] -> [Package]
-heaviestFirst = sortBy (flip $ comparing weight)
 
 groupsOfWeight :: Int -> [Package] -> [[Package]]
 groupsOfWeight limit packages = filter ((limit ==) . totalWeight) $ subsequences packages
