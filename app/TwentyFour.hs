@@ -8,26 +8,18 @@ import           Data.Ord      (comparing)
 newtype Package = Package { weight :: Int }
                   deriving (Show, Eq, Ord)
 
-threeGroups :: [Package] -> [[[Package]]]
-threeGroups pkgs = let limit = totalWeight pkgs `div` 3 in
-  do
-    group1 <- bestGroups limit pkgs
-    group2 <- groupsOfWeight limit (pkgs \\ group1)
-    group3 <- groupsOfWeight limit ((pkgs \\ group1) \\ group2)
-    let groups = [group1, group2, group3] in do
-      guard (length pkgs == sum (map length groups))
-      return groups
-
-fourGroups :: [Package] -> [[[Package]]]
-fourGroups pkgs = let limit = totalWeight pkgs `div` 4 in
-  do
-    group1 <- bestGroups limit pkgs
-    group2 <- groupsOfWeight limit (pkgs \\ group1)
-    group3 <- groupsOfWeight limit ((pkgs \\ group1) \\ group2)
-    group4 <- groupsOfWeight limit (((pkgs \\ group1) \\ group2) \\ group3)
-    let groups = [group1, group2, group3, group4] in do
-      guard (length pkgs == sum (map length groups))
-      return groups
+nGroups :: Int -> [Package] -> [[[Package]]]
+nGroups n pkgs = do
+  group1 <- bestGroups limit pkgs
+  groups <- go [group1] (n - 1) (pkgs \\ group1)
+  guard (length pkgs == sum (map length groups))
+  return groups
+  where
+    limit = totalWeight pkgs `div` n
+    go sofar 0 _  = return sofar
+    go sofar i ps = do
+      g <- groupsOfWeight limit ps
+      go (sofar ++ [g]) (i-1) (ps \\ g)
 
 bestGroups :: Int -> [Package] -> [[Package]]
 bestGroups limit pkgs = concatMap (sortBy (comparing entanglement)) $ groupBy ((==) `on` length) $ groupsOfWeight limit pkgs
@@ -64,6 +56,6 @@ packagesFrom file = do
 twentyFour :: IO (Int, Int)
 twentyFour = do
   pkgs <- packagesFrom "input/24.txt"
-  return (answer threeGroups pkgs,
-          answer fourGroups pkgs)
-    where answer f = entanglement . head . head . f
+  return (answer 3 pkgs,
+          answer 4 pkgs)
+    where answer n = entanglement . head . head . nGroups n
