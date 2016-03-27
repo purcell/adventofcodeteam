@@ -41,8 +41,14 @@ executable adventofcode
     Thirteen
     Fourteen
     Fifteen
+    Sixteen
     Seventeen
     Eighteen
+    Nineteen
+    Twenty
+    TwentyOne
+    TwentyTwo
+    TwentyFour
 
 source-repository head
   type:     git

@@ -19,6 +19,8 @@ import           Thirteen
 import           Three
 import           Twelve
 import           Twenty
+import           TwentyFour
+import           TwentyOne
 import           Two
 
 
@@ -52,3 +54,5 @@ main = do
   done 18 eighteen
   done 19 nineteen
   done 20 (return twenty)
+  done 21 (return twentyOne)
+  done 24 twentyFour
