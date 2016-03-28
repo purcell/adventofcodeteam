@@ -48,6 +48,7 @@ executable adventofcode
     Twenty
     TwentyOne
     TwentyTwo
+    TwentyThree
     TwentyFour
 
 source-repository head
