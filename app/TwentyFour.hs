@@ -11,15 +11,16 @@ newtype Package = Package { weight :: Int }
 nGroups :: Int -> [Package] -> [[[Package]]]
 nGroups n pkgs = do
   group1 <- bestGroups limit pkgs
-  groups <- go [group1] (n - 1) (pkgs \\ group1)
-  guard (length pkgs == sum (map length groups))
-  return groups
+  otherGroups <- takeGroups (n - 1) (pkgs \\ group1)
+  let groups = group1 : otherGroups in do
+    guard (length pkgs == length (concat groups))
+    return groups
   where
     limit = totalWeight pkgs `div` n
-    go sofar 0 _  = return sofar
-    go sofar i ps = do
+    takeGroups 0 _  = return []
+    takeGroups i ps = do
       g <- groupsOfWeight limit ps
-      go (sofar ++ [g]) (i-1) (ps \\ g)
+      (g:) <$> takeGroups (i-1) (ps \\ g)
 
 bestGroups :: Int -> [Package] -> [[Package]]
 bestGroups limit pkgs = concatMap (sortBy (comparing entanglement)) $ groupBy ((==) `on` length) $ groupsOfWeight limit pkgs
