@@ -1,86 +1,157 @@
+{-# LANGUAGE GeneralizedNewtypeDeriving #-}
 module TwentyTwo where
 
-type Player = (Stats, Effects, Effects)
-type Stats = (Int, Int, Int, Int)
-type Effect = (Stats -> Stats)
-type Effects = [(Char, Int, Effect)]
-type Boss = Player
-type Spell = (Player, Boss) -> (Player, Boss)
+import           Control.Applicative      (empty)
+import           Control.Monad.Except
+import           Control.Monad.State.Lazy
+import           Data.Function            (on)
+import           Data.List                (intersectBy, partition)
+import           Prelude                  hiding (round)
 
-costMana :: Player -> Int -> Player
-costMana ((hp, mana, armour, damage), effects, bonuses) cost = ((hp, mana - cost, armour, damage), effects, bonuses)
+data Spell = MagicMissile | Drain | Shield | Poison | Recharge
+  deriving Show
 
-healPlayer :: Player -> Int -> Player
-healPlayer ((hp, mana, armour, damage), effects, bonuses) bonus = ((hp - bonus, mana, armour, damage), effects, bonuses)
+allSpells :: [Spell]
+allSpells = [MagicMissile, Drain, Shield, Poison, Recharge]
 
-damagePlayer :: Player -> Int -> Player
-damagePlayer ((hp, mana, armour, damage), effects, bonuses) wound = ((hp - (max (wound - armour) 1), mana, armour, damage), effects, bonuses)
+spellCost :: Spell -> Int
+spellCost MagicMissile = 53
+spellCost Drain        = 73
+spellCost Shield       = 113
+spellCost Poison       = 173
+spellCost Recharge     = 229
 
-addPlayerEffect :: Player -> Char -> Effect -> Int -> Player
-addPlayerEffect (stats, effects, bonuses) key effect duration = (stats, (effects ++ [(key, duration, effect)]), bonuses)
+data Power = Heal | Damage | Armor | Mana
+           deriving (Eq, Show)
 
-addPlayerBonus :: Player -> Char -> Effect -> Int -> Player
-addPlayerBonus (stats, effects, bonuses) key effect duration = (stats, effects, (bonuses ++ [(key, duration, effect)]))
+spellPowers :: Spell -> [(Power, Int)]
+spellPowers MagicMissile = [(Damage, 4)]
+spellPowers Drain        = [(Damage, 2), (Heal, 2)]
+spellPowers _            = []
 
--- Magic Missile costs 53 mana. It instantly does 4 damage.
-magicMissile :: (Player, Boss) -> (Player, Boss)
-magicMissile (player, boss) = (player, (damagePlayer boss 4))
+data Effect = Effect { effectTimer :: Int, effectPower :: Power, effectQuantity :: Int }
+  deriving Show
 
--- Drain costs 73 mana. It instantly does 2 damage and heals you for 2 hit points.
-drain :: (Player, Boss) -> (Player, Boss)
-drain (player, boss) = ((healPlayer player 2), (damagePlayer boss 2))
+spellEffects :: Spell -> [Effect]
+spellEffects Shield   = [Effect 6 Armor 7]
+spellEffects Poison   = [Effect 6 Damage 3]
+spellEffects Recharge = [Effect 5 Mana 101]
+spellEffects _        = []
 
--- Shield costs 113 mana. It starts an effect that lasts for 6 turns. While it is active, your armor is increased by 7.
-shield :: (Player, Boss) -> (Player, Boss)
-shield (player, boss) = ((addPlayerBonus player 'S' shieldEffect 6), boss)
 
-shieldEffect :: Stats -> Stats
-shieldEffect (hp, mana, armour, damage) = (hp, mana, armour + 7, damage)
+data GameState = GameState { gsPlayerHitPoints :: Int
+                           , gsPlayerMana      :: Int
+                           , gsPlayerArmor     :: Int
+                           , gsBossHitPoints   :: Int
+                           , gsBossDamage      :: Int
+                           , gsManaSpent       :: Int
+                           , gsSpellsCast      :: [Spell]
+                           , gsActiveEffects   :: [Effect] }
+                 deriving Show
 
--- Poison costs 173 mana. It starts an effect that lasts for 6 turns. At the start of each turn while it is active, it deals the boss 3 damage.
-poison :: (Player, Boss) -> (Player, Boss)
-poison (player, boss) = (player, (addPlayerEffect boss 'P' poisonEffect 6))
 
-poisonEffect :: Stats -> Stats
-poisonEffect (hp, mana, armour, damage) = (hp - 3, mana, armour, damage)
+data Result = Lost | Won
+  deriving (Show, Eq)
 
--- Recharge costs 229 mana. It starts an effect that lasts for 5 turns. At the start of each turn while it is active, it gives you 101 new mana.
+newtype Game a = Game { unGame :: ExceptT Result (State GameState) a }
+  deriving (Functor, Applicative, Monad, MonadState GameState, MonadError Result)
 
-recharge :: (Player, Boss) -> (Player, Boss)
-recharge (player, boss) = ((addPlayerEffect player 'R' rechargeEffect 5), boss)
+runGame :: Game a -> GameState -> (Either Result a, GameState)
+runGame g gs = runState (runExceptT $ unGame g) gs
 
-rechargeEffect :: Stats -> Stats
-rechargeEffect (hp, mana, armour, damage) = (hp, mana + 101, armour, damage)
+turn :: Game a -> Game ()
+turn step = do
+  effects <- gets gsActiveEffects
+  modify (\gs -> gs { gsActiveEffects = ageEffects effects })
+  mapM_ applyEffect effects
+  void (checkResult step)
+  mapM_ endEffect effects
 
-spellBook :: [(Char, Spell, Int)]
-spellBook = [('M', magicMissile, 53), ('D', drain, 73), ('S', shield, 113), ('P', poison, 173), ('R', recharge, 229)]
+ageEffects :: [Effect] -> [Effect]
+ageEffects = filter ((> 0) . effectTimer) . map (\e -> e { effectTimer = effectTimer e - 1 })
 
-startTurn :: Player -> Player
-startTurn (stats, effects, bonuses) = ((foldl applyEffect stats effects), (countdown effects), (countdown bonuses))
+round :: Spell -> Game ()
+round spell = do
+  turn (attack spell)
+  turn defend
 
-applyEffect :: Stats -> (Char, Int, Effect) -> Stats
-applyEffect stats (_, _, effect) = effect stats
+attack :: Spell -> Game ()
+attack s = do
+  allowed <- gets (spellAllowed s)
+  if allowed then do
+    modify (\gs -> gs { gsPlayerMana    = gsPlayerMana gs - spellCost s
+                      , gsActiveEffects = gsActiveEffects gs ++ spellEffects s
+                      , gsSpellsCast    = gsSpellsCast gs ++ [s]
+                      , gsManaSpent     = gsManaSpent gs + spellCost s })
+    mapM_ (uncurry applyPower) (spellPowers s)
+  else throwError Lost
 
-countdown :: Effects -> Effects
-countdown [] = []
-countdown ((_, 0, _):effects) = countdown effects
-countdown ((key, turns, effect):effects) = [(key, turns - 1, effect)] ++ (countdown effects)
+spellAllowed :: Spell -> GameState -> Bool
+spellAllowed s gs = affordable && notActive
+  where
+    affordable = spellCost s <= gsPlayerMana gs
+    notActive = null $ intersectBy ((==) `on` effectPower) (gsActiveEffects gs) (spellEffects s)
 
-availableSpells :: Player -> Boss -> [(Char, Spell, Int)]
-availableSpells player boss = filter (spellIsAvailable player boss) spellBook
+checkResult :: Game a -> Game a
+checkResult step = do
+  ret <- step
+  res <- gets result
+  case res of
+    Just r -> throwError r
+    _ -> return ret
+  where
+    result gs | gsPlayerHitPoints gs <= 0 || gsPlayerMana gs < 0 = Just Lost
+    result gs | gsBossHitPoints gs <= 0                          = Just Won
+    result _ = Nothing
 
-spellIsAvailable :: Player -> Boss -> (Char, Spell, Int) -> Bool
-spellIsAvailable ((_, mana, _, _), playerEffects, playerBonuses) (bossStats, bossEffects, bossBonuses) (key, _, cost) = cost <= mana && (noInstanceOf key (concat [playerEffects, playerBonuses, bossEffects, bossBonuses]))
+defend :: Game ()
+defend = modify (\gs -> gs { gsPlayerHitPoints = gsPlayerHitPoints gs - damage gs})
+  where damage gs = maximum [1, gsBossDamage gs - gsPlayerArmor gs]
 
-noInstanceOf :: Char -> Effects -> Bool
-noInstanceOf key effects = not (any (isInstanceOf key) effects)
+applyPower :: Power -> Int -> Game ()
+applyPower p n = checkResult $
+  case p of
+   Armor  -> modify (\gs -> gs { gsPlayerArmor     = gsPlayerArmor gs + n })
+   Damage -> modify (\gs -> gs { gsBossHitPoints   = gsBossHitPoints gs - n })
+   Heal   -> modify (\gs -> gs { gsPlayerHitPoints = gsPlayerHitPoints gs + n })
+   Mana   -> modify (\gs -> gs { gsPlayerMana      = gsPlayerMana gs + n })
 
-isInstanceOf :: Char -> (Char, Int, Effect) -> Bool
-isInstanceOf key (k, _, _) = key == k
+applyEffect :: Effect -> Game ()
+applyEffect (Effect _ power n) = applyPower power n
 
-newPlayer :: Player
-newPlayer = ((50, 500, 0, 0), [], [])
+endEffect :: Effect -> Game ()
+endEffect (Effect _ Armor n) = modify (\gs -> gs { gsPlayerArmor = gsPlayerArmor gs - n })
+endEffect _ = pure ()
 
-newBoss :: Boss
-newBoss = ((71, 0, 0, 10), [], [])
+nextStates :: GameState -> [(Bool, GameState)]
+nextStates gs = do
+  spell <- allSpells
+  case runGame (round spell) gs of
+    (Left Lost, _  ) -> empty
+    (Left Won,  gs') -> return (True,  gs')
+    (_,         gs') -> return (False, gs')
 
+
+cheapestWin :: GameState -> Maybe GameState
+cheapestWin gs = go [(False, gs)] Nothing
+  where
+    go :: [(Bool, GameState)] -> Maybe GameState -> Maybe GameState
+    go [] best = best
+    go ((_,     g):gss) (Just best)
+      | gsManaSpent g >= gsManaSpent best = go gss (Just best)
+    go ((True,  g):gss) _                 = go gss (Just g)
+    go ((False, g):gss) best              = go (losses ++ gss) (go wins best)
+      where (wins, losses) = partition fst (nextStates g)
+
+
+twentyTwo = cheapestWin (GameState 50 500 0 58 9 0 [] [])
+
+
+sample2 = runGame rounds (GameState 10 250 0 14 8 0 [] [])
+  where
+    rounds = do
+      round Poison
+      round Shield
+      round Drain
+      round Poison
+      round MagicMissile
