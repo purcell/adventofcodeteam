@@ -99,9 +99,9 @@ checkResult = do
     Just r -> throwError r
     _      -> pure ()
   where
-    result gs | gsPlayerHitPoints gs <= 0 || gsPlayerMana gs < 0 = Just Lost
-    result gs | gsBossHitPoints gs <= 0                          = Just Won
-    result _ = Nothing
+    result gs | gsPlayerHitPoints gs <= 0 = Just Lost
+    result gs | gsBossHitPoints gs <= 0   = Just Won
+    result _                              = Nothing
 
 defend :: Game ()
 defend = modify (\gs -> gs { gsPlayerHitPoints = gsPlayerHitPoints gs - damage gs})
