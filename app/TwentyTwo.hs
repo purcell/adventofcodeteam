@@ -97,7 +97,7 @@ checkResult = do
   res <- gets result
   case res of
     Just r -> throwError r
-    _ -> return ()
+    _      -> pure ()
   where
     result gs | gsPlayerHitPoints gs <= 0 || gsPlayerMana gs < 0 = Just Lost
     result gs | gsBossHitPoints gs <= 0                          = Just Won
@@ -127,8 +127,8 @@ nextStates gs = do
   spell <- allSpells
   case runGame (round spell) gs of
     (Left Lost, _  ) -> empty
-    (Left Won,  gs') -> return (True,  gs')
-    (_,         gs') -> return (False, gs')
+    (Left Won,  gs') -> pure (True,  gs')
+    (_,         gs') -> pure (False, gs')
 
 
 cheapestWin :: GameState -> Maybe GameState
