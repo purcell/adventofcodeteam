@@ -64,7 +64,7 @@ turn step = do
   effects <- gets gsActiveEffects
   modify (\gs -> gs { gsActiveEffects = ageEffects effects })
   mapM_ applyEffect effects
-  step *> checkResult
+  step *> checkAlive
   mapM_ endEffect effects
 
 ageEffects :: [Effect] -> [Effect]
@@ -92,8 +92,8 @@ spellAllowed s gs = affordable && notActive
     affordable = spellCost s <= gsPlayerMana gs
     notActive = null $ intersectBy ((==) `on` effectPower) (gsActiveEffects gs) (spellEffects s)
 
-checkResult :: Game ()
-checkResult = do
+checkAlive :: Game ()
+checkAlive = do
   res <- gets result
   case res of
     Just r -> throwError r
@@ -108,7 +108,7 @@ defend = modify (\gs -> gs { gsPlayerHitPoints = gsPlayerHitPoints gs - damage g
   where damage gs = maximum [1, gsBossDamage gs - gsPlayerArmor gs]
 
 applyPower :: Power -> Int -> Game ()
-applyPower p n = checkResult *>
+applyPower p n = checkAlive *>
   case p of
    Armor  -> modify (\gs -> gs { gsPlayerArmor     = gsPlayerArmor gs + n })
    Damage -> modify (\gs -> gs { gsBossHitPoints   = gsBossHitPoints gs - n })
